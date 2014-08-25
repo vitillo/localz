@@ -9,6 +9,20 @@
 
 (def clients (atom {}))
 
+(defn dissoc-in
+  "Dissociates an entry from a nested associative structure returning a new
+  nested structure. keys is a sequence of keys. Any empty maps that result
+  will not be present in the new structure."
+  [m [k & ks :as keys]]
+  (if ks
+    (if-let [nextmap (get m k)]
+      (let [newmap (dissoc-in nextmap ks)]
+        (if (seq newmap)
+          (assoc m k newmap)
+          (dissoc m k)))
+      m)
+    (dissoc m k)))
+
 (defn broadcast [{:keys [location] :as message}]
   (println "Broadcasting message: " message)
   (let [message (pr-str message)
@@ -35,7 +49,7 @@
             (<! (broadcast message))
             (recur))
           (do
-            (swap dissoc-in [@sector-id ws-ch])
+            (swap! dissoc-in [@sector-id ws-ch])
             (println "DISCONNECTED")))))))
 
 (defn chatroom [req]
